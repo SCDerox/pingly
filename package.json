@@ -1,0 +1,26 @@
+{
+  "name": "pingly",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./app.js",
+    "build": "npx tailwindcss build -i ./css/tailwind.css -o public/css/tailwind.css"
+  },
+  "dependencies": {
+    "@tailwindcss/forms": "^0.3.3",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "ejs": "~2.6.1",
+    "express": "~4.16.1",
+    "express-rate-limit": "^5.2.6",
+    "http-errors": "~1.6.3",
+    "log4js": "^6.3.0",
+    "morgan": "~1.9.1",
+    "sequelize": "^6.6.4",
+    "socket.io": "^4.1.2",
+    "sqlite3": "^5.0.2",
+    "tailwind-scrollbar-hide": "^1.0.3",
+    "tailwindcss": "^2.2.4",
+    "tailwindcss-gradients": "^3.0.0"
+  }
+}

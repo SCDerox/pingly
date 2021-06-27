@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>pingly</title>
+    <meta charset="UTF-8">
+    <link rel='stylesheet' href='/css/tailwind.css'/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+          rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+</head>
+<body class="bg-gray-200 text-gray-800 bg-center bg-no-repeat"
+      style='background-image: url("https://images.pexels.com/photos/167699/pexels-photo-167699.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260")'>
+<div class="w-full flex items-center justify-center h-screen">
+    <div class="px-3 py-12 select-none lg:px-12 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-60 border border-gray-200">
+        <h2 class="text-3xl font-bold"><span class="text-pink-600">p</span>ingly</h2>
+        <div id="enter-name" class="hidden">
+            <div class="mt-3">
+                <input type="text" id="username" class="rounded focus:ring-pink-600 focus:border-pink-600"
+                       placeholder="Username (case-sensitve)">
+            </div>
+            <div class="mt-3">
+                <button id="name-continue"
+                        class="bg-pink-600 flex items-center rounded hover:bg-pink-700 transition duration-150 p-1 text-gray-200">
+                    Continue <span
+                            class="material-icons-round">
+arrow_right
+</span></button>
+            </div>
+        </div>
+        <div id="redirect" class="mt-5 hidden">
+            Taking you to the chat...
+        </div>
+        <div id="loading" class="mt-5 hidden">
+            Fetching some data...
+        </div>
+        <div id="error" class="mt-5 hidden">
+            Something went wrong. Please try again.
+        </div>
+        <div id="js" class="mt-5">
+            Please enable JavaScript or make sure every script is loaded to continue.
+        </div>
+        <div id="enter-token" class="mt-5 hidden">
+            <b>Welcome back, <span id="enter-token-name">Just a sec...</span>!</b>
+            <p class="mt-2 text-sm">Enter your token to continue!</p>
+            <input type="password" id="token" class="rounded mt-1 focus:ring-pink-600 focus:border-pink-600"
+                   placeholder="Your token">
+            <div class="mt-3">
+                <button id="token-continue"
+                        class="bg-pink-600 flex items-center rounded hover:bg-pink-700 transition duration-150 p-1 text-gray-200">
+                    Continue <span
+                            class="material-icons-round">
+arrow_right
+</span></button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    if (window.location.href.includes('?action=logout')) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('username')
+    }
+    window.history.pushState({}, '', '/');
+    $('#js').hide();
+    const username = $('#username');
+    if (!localStorage.getItem('token')) $('#enter-name').show();
+    else {
+        $('#redirect').show();
+        setTimeout(() => {
+            window.location.href = '/app';
+        }, 3000);
+    }
+    $('#name-continue').click(() => {
+        if (!username.val()) return username.addClass('border-red-600 border-2');
+        $('#enter-name').hide();
+        $('#loading').show();
+        $.ajax({
+            url: `/users/${username.val()}`,
+            method: 'GET',
+            complete: async function (res) {
+                console.log(res);
+                if (res.status === 200) {
+                    $('#loading').hide();
+                    $('#enter-token').show();
+                    $('#enter-token-name').html(res.responseJSON.username);
+                    $('#token-continue').click(() => {
+                        $('#loading').show();
+                        $('#enter-token').hide();
+                        $.ajax({
+                            url: `/users/${username.val()}/session`,
+                            method: 'POST',
+                            data: {
+                                token: $('#token').val()
+                            },
+                            success: function (res) {
+                                localStorage.setItem('token', res.token);
+                                localStorage.setItem('username', res.username);
+                                $('#redirect').show();
+                                setTimeout(() => {
+                                    window.location.href = '/app';
+                                }, 3000);
+                            },
+                            complete: function () {
+                                $('#loading').hide();
+                            },
+                            error: function () {
+                                $('#error').show();
+                            }
+                        });
+                    });
+                    return;
+                }
+                if (res.status === 404) { // User not found, creating new one
+                    $.ajax({
+                        url: '/users',
+                        method: 'POST',
+                        data: {
+                            username: username.val()
+                        },
+                        success: function (res) {
+                            localStorage.setItem('token', res.token);
+                            localStorage.setItem('username', res.username);
+                            $('#redirect').show();
+                            setTimeout(() => {
+                                window.location.href = '/app?action=new-user';
+                            }, 3000);
+                        },
+                        complete: function () {
+                            $('#loading').hide();
+                        },
+                        error: function () {
+                            $('#error').show();
+                        }
+                    });
+                    return;
+                }
+                $('#loading').hide();
+                $('#error').show();
+            }
+        });
+    });
+</script>
+</html>
