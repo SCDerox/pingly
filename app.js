@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const config = require('./config.json');
-const {Sequelize, DataTypes} = require('sequelize');
+const { Sequelize, DataTypes } = require('sequelize');
 const db = new Sequelize({
     dialect: 'sqlite',
     storage: './database.sqlite'
@@ -33,10 +33,9 @@ logger.level = 'debug';
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
-const {Server} = require('socket.io');
+const { Server } = require('socket.io');
 const io = new Server(server);
 app.set('trust proxy', 1);
-
 io.on('connection', (socket) => {
     console.log('a user connected');
 });
@@ -46,11 +45,11 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use((req, res, next) => {
-    req.models = {User}
+    req.models = { User }
     next();
 })
 
