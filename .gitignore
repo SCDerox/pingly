@@ -1,0 +1,4 @@
+node_modules
+public/css/tailwind.css
+database.sqlite
+config.json
