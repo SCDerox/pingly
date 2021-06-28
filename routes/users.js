@@ -32,7 +32,7 @@ router.post('/:username/session', async function (req, res, next) {
     });
     console.log(user.token, req.body.token)
     if (!user) return res.status(404).json({error: 'Not found'});
-    if (user.token === req.body.token) return res.json({valid: true});
+    if (user.token === req.body.token) return res.json({ valid: true});
     else res.status(403).json({valid: false})
 });
 

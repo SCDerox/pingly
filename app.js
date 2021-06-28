@@ -4,6 +4,7 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const config = require('./config.json');
 const { Sequelize, DataTypes } = require('sequelize');
+const html_sanitize = require('html_sanitize')
 const db = new Sequelize({
     dialect: 'sqlite',
     storage: './database.sqlite'
@@ -21,7 +22,12 @@ const User = db.define('User', {
         type: DataTypes.JSON,
         defaultValue: ['WRITE']
     },
-    color: DataTypes.STRING
+    color: DataTypes.STRING,
+    description: DataTypes.STRING,
+    banned: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    }
 }, {
     // Other model options go here
 });
@@ -34,10 +40,91 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
+const { Session } = require('inspector');
 const io = new Server(server);
 app.set('trust proxy', 1);
+io.use(async (socket, next) => {
+    const token = socket.handshake.auth.token;
+    const username = socket.handshake.auth.username;
+    console.log(token, username)
+    const user = await User.findOne({
+        where: {
+            token,
+            username
+        }
+    })
+    if (!user) {
+        const err = new Error('Wrong token - please try reauthenficating');
+        next(err);
+        return;
+    }
+    if (user.banned) {
+        const err = new Error('This user was banned by an administrator');
+        next(err);
+        return;
+    }
+    socket.user = user;
+    next();
+});
 io.on('connection', (socket) => {
-    console.log('a user connected');
+    socket.on('message', async (data) => {
+        if (data.content.startsWith('/')) {
+            let command = data.content.split('/').join('').split(' ')[0];
+            const args = data.content.split('/' + command).join('').split(' ');
+            args.shift();
+            console.log(command, args)
+            switch (command) {
+                case 'color':
+                    const user = await User.findOne({
+                        where: {
+                            username: args[0]
+                        }
+                    })
+                    user.color = args[1];
+                    await user.save();
+                    socket.send({ content: 'Changed color', system: true })
+                    break;
+                case 'ban':
+                    const userToBan = await User.findOne({
+                        where: {
+                            username: args[0]
+                        }
+                    })
+                    userToBan.banned = true;
+                    await userToBan.save();
+                    socket.emit('refresh', { username: userToBan.username })
+                    socket.send({ content: 'Saved successuflly', system: true });
+                    break;
+                case 'unban':
+                    const userToUnBan = await User.findOne({
+                        where: {
+                            username: args[0]
+                        }
+                    })
+                    userToUnBan.banned = false;
+                    await userToUnBan.save();
+                    socket.send({ content: 'Saved successuflly', system: true });
+                    break;
+                default:
+                    console.log(data.content)
+                    socket.send({ content: 'Command not found. Use<b>/help</b> to see all availible commands.', system: true })
+            }
+            return;
+        }
+        io.emit('message', { content: html_sanitize.escape(data.content), author: { username: socket.user.username, color: socket.user.color } })
+    })
+    socket.on('connected', () => {
+        io.emit('message', {
+            content: `<b ${socket.user.color ? `style="color: ${socket.user.color}"` : ''}>${socket.user.username}</b> connected to this chat`,
+            system: true
+        })
+    })
+    socket.on('disconnect', () => {
+        io.emit('message', {
+            content: `<b ${socket.user.color ? `style="color: ${socket.user.color}"` : ''}>${socket.user.username}</b> disconnected`,
+            system: true
+        })
+    })
 });
 
 // view engine setup
@@ -72,7 +159,7 @@ app.use(function (err, req, res, next) {
     res.render('error');
 });
 
-db.sync().then(() => {
+db.sync({ force: false }).then(() => {
     server.listen(config.port, () => {
         logger.info(`Listening on port ${config.port}`);
     });
