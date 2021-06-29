@@ -37,6 +37,22 @@
                 </div>
             </div>
             <div class="w-2/3 p-2">
+                <div id="intro"
+                    class="rounded hidden p-3 mb-3 bg-clip-padding backdrop-filter backdrop-blur-xl bg-white bg-opacity-60 border border-gray-200">
+                    <h2 class="font-bold text-2xl">Welcome to <span class="text-pink-600">p</span>ingly!</h2>
+                    <p class="mt-2">
+                        Here's your token. You should save it securly somewhere. <span class="text-red-600">threat it
+                            like a password, you need it to log
+                            in - do not share it with others</span>.
+                    </p>
+                    <p class="bg-gray-300 mt-1 text-sm select-all font-mono inline-block rounded p-2">
+                        <script>document.write(localStorage.getItem('token'))</script>
+                    </p>
+                    <p class="mt-1 text-gray-600 text-xs">
+                        <a href="" class="text-pink-600 hover:text-pink-500 transition duration-150">Reload</a> the page
+                        to hide this message.
+                    </p>
+                </div>
                 <div
                     class="rounded p-3 bg-clip-padding backdrop-filter backdrop-blur-xl bg-white bg-opacity-60 border border-gray-200">
                     <div id="messages" class="h-96 overflow-y-scroll scrollbar-hide">
@@ -65,6 +81,9 @@
         }).blur(function () {
             window_focus = false;
         });
+
+        if (window.location.href.includes('?action=new-user')) $('#intro').show();
+        window.history.pushState({}, '', '/app');
 
         if (!localStorage.getItem('token')) window.location.href = '/?action=logout';
         var socket = io({

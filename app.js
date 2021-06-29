@@ -95,6 +95,9 @@ io.on('connection', (socket) => {
                     socket.emit('refresh', { username: userToBan.username })
                     socket.send({ content: 'Saved successuflly', system: true });
                     break;
+                case 'help':
+                    socket.send({ content: 'SOON™', system: true });
+                    break;
                 case 'unban':
                     const userToUnBan = await User.findOne({
                         where: {
