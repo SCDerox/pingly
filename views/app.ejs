@@ -114,10 +114,15 @@
             message({ content: 'Welcome to <span class="text-pink-600 font-bold">p</span>ingly! To see all commands run <b>/help</b>', system: true })
         })
         socket.on('disconnect', () => {
+            $('#users').html('')
             $('#loading').show();
         })
+        socket.io.on("reconnect", () => {
+            $('#users').html('')
+        });
         socket.on("connect_error", (err) => {
             console.log(err)
+            $('#users').html('')
             $('#loading').show();
             $('#loading-title').html(err.message)
         });

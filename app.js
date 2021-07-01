@@ -126,8 +126,10 @@ io.on('connection', (socket) => {
             username: socket.user.username,
             color: socket.user.color
         })
-        onlineCache.push(socket.user.username)
-        // ToDo emit userConnectedEvent on userCache element
+        if (!onlineCache.includes(socket.user.username)) onlineCache.push(socket.user.username)
+        onlineCache.forEach(name => {
+            socket.emit('userConnect', ({ username: name, color: null }))
+        })
     })
     socket.on('disconnect', () => {
         io.emit('message', {
@@ -137,8 +139,8 @@ io.on('connection', (socket) => {
         io.emit('userDisconnect', {
             username: socket.user.username
         })
-        // ToDo Remove user from onlineCache
-    })
+        onlineCache.splice(onlineCache.indexOf(socket.user.username), 1);
+    });
 });
 
 // view engine setup
