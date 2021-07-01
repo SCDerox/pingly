@@ -9,6 +9,7 @@ const db = new Sequelize({
     dialect: 'sqlite',
     storage: './database.sqlite'
 });
+const onlineCache = [];
 const User = db.define('User', {
     username: {
         type: DataTypes.STRING,
@@ -121,12 +122,22 @@ io.on('connection', (socket) => {
             content: `<b ${socket.user.color ? `style="color: ${socket.user.color}"` : ''}>${socket.user.username}</b> connected to this chat`,
             system: true
         })
+        io.emit('userConnect', {
+            username: socket.user.username,
+            color: socket.user.color
+        })
+        onlineCache.push(socket.user.username)
+        // ToDo emit userConnectedEvent on userCache element
     })
     socket.on('disconnect', () => {
         io.emit('message', {
             content: `<b ${socket.user.color ? `style="color: ${socket.user.color}"` : ''}>${socket.user.username}</b> disconnected`,
             system: true
+        });
+        io.emit('userDisconnect', {
+            username: socket.user.username
         })
+        // ToDo Remove user from onlineCache
     })
 });
 

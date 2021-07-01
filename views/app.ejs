@@ -33,7 +33,15 @@
             <div class="w-1/3 p-2">
                 <div
                     class="rounded p-3 bg-clip-padding backdrop-filter backdrop-blur-xl bg-white bg-opacity-60 border border-gray-200">
-                    Channel here
+                    <h2 class="text-xl font-bold">Online users</h2>
+                    <div class="flex mt-2 items-center">
+                        <script>document.write(localStorage.getItem('username'))</script> <span
+                            class="bg-pink-600 text-gray-100 p-1 rounded ml-1 text-sm">You</span>
+                    </div>
+                    <div id="users">
+
+                    </div>
+
                 </div>
             </div>
             <div class="w-2/3 p-2">
@@ -142,6 +150,18 @@
         })
         socket.on('refresh', function (user) {
             if (user.username === localStorage.getItem('username')) window.location.href = '';
+        })
+        socket.on('userConnect', function (user) {
+            if (user.username === localStorage.getItem('username')) return;
+            $('#users').append(`<div class="animate__animated animate__fadeInLeft" id="u-${user.username}">${user.username}</div>`)
+        })
+        socket.on('userDisconnect', function (user) {
+            $(`#u-${user.username}`).removeClass('animate__animated animate__fadeInLeft')
+            $(`#u-${user.username}`).addClass('animate__animated animate__backOutLeft')
+            const element = document.querySelector(`#u-${user.username}`);
+            element.addEventListener('animationend', () => {
+                $(`#u-${user.username}`).remove();
+            });
         })
         function message(msg) {
             if (!msg.system) $('#messages').append(`<p class="mt-1 animate__faster animate__fadeInLeft animate__animated"><b class="block" ${msg.author.color ? `style="color: ${msg.author.color}"` : ''}>${msg.author.username}</b> ${msg.content.split('\n').join('<br>')}</p>`)
